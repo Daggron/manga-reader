@@ -33443,7 +33443,96 @@ module.exports.default = axios;
 
 },{"./utils":"../node_modules/axios/lib/utils.js","./helpers/bind":"../node_modules/axios/lib/helpers/bind.js","./core/Axios":"../node_modules/axios/lib/core/Axios.js","./core/mergeConfig":"../node_modules/axios/lib/core/mergeConfig.js","./defaults":"../node_modules/axios/lib/defaults.js","./cancel/Cancel":"../node_modules/axios/lib/cancel/Cancel.js","./cancel/CancelToken":"../node_modules/axios/lib/cancel/CancelToken.js","./cancel/isCancel":"../node_modules/axios/lib/cancel/isCancel.js","./helpers/spread":"../node_modules/axios/lib/helpers/spread.js"}],"../node_modules/axios/index.js":[function(require,module,exports) {
 module.exports = require('./lib/axios');
-},{"./lib/axios":"../node_modules/axios/lib/axios.js"}],"components/app.js":[function(require,module,exports) {
+},{"./lib/axios":"../node_modules/axios/lib/axios.js"}],"../node_modules/parcel-bundler/src/builtins/bundle-url.js":[function(require,module,exports) {
+var bundleURL = null;
+
+function getBundleURLCached() {
+  if (!bundleURL) {
+    bundleURL = getBundleURL();
+  }
+
+  return bundleURL;
+}
+
+function getBundleURL() {
+  // Attempt to find the URL of the current script and use that as the base URL
+  try {
+    throw new Error();
+  } catch (err) {
+    var matches = ('' + err.stack).match(/(https?|file|ftp|chrome-extension|moz-extension):\/\/[^)\n]+/g);
+
+    if (matches) {
+      return getBaseURL(matches[0]);
+    }
+  }
+
+  return '/';
+}
+
+function getBaseURL(url) {
+  return ('' + url).replace(/^((?:https?|file|ftp|chrome-extension|moz-extension):\/\/.+)\/[^/]+$/, '$1') + '/';
+}
+
+exports.getBundleURL = getBundleURLCached;
+exports.getBaseURL = getBaseURL;
+},{}],"../node_modules/parcel-bundler/src/builtins/css-loader.js":[function(require,module,exports) {
+var bundle = require('./bundle-url');
+
+function updateLink(link) {
+  var newLink = link.cloneNode();
+
+  newLink.onload = function () {
+    link.remove();
+  };
+
+  newLink.href = link.href.split('?')[0] + '?' + Date.now();
+  link.parentNode.insertBefore(newLink, link.nextSibling);
+}
+
+var cssTimeout = null;
+
+function reloadCSS() {
+  if (cssTimeout) {
+    return;
+  }
+
+  cssTimeout = setTimeout(function () {
+    var links = document.querySelectorAll('link[rel="stylesheet"]');
+
+    for (var i = 0; i < links.length; i++) {
+      if (bundle.getBaseURL(links[i].href) === bundle.getBundleURL()) {
+        updateLink(links[i]);
+      }
+    }
+
+    cssTimeout = null;
+  }, 50);
+}
+
+module.exports = reloadCSS;
+},{"./bundle-url":"../node_modules/parcel-bundler/src/builtins/bundle-url.js"}],"components/app.css":[function(require,module,exports) {
+var reloadCSS = require('_css_loader');
+
+module.hot.dispose(reloadCSS);
+module.hot.accept(reloadCSS);
+},{"_css_loader":"../node_modules/parcel-bundler/src/builtins/css-loader.js"}],"components/Heading.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = Heading;
+
+var _react = _interopRequireDefault(require("react"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function Heading() {
+  return _react.default.createElement("div", {
+    className: "heading"
+  }, _react.default.createElement("h1", null, "The News"));
+}
+},{"react":"../node_modules/react/index.js"}],"components/app.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -33454,6 +33543,10 @@ exports.default = void 0;
 var _react = _interopRequireDefault(require("react"));
 
 var _axios = _interopRequireDefault(require("axios"));
+
+require("./app.css");
+
+var _Heading = _interopRequireDefault(require("./Heading"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -33487,7 +33580,9 @@ function (_React$Component) {
 
     _this = _possibleConstructorReturn(this, _getPrototypeOf(App).call(this, props));
     _this.state = {
-      news: []
+      news: [],
+      err: "",
+      isError: false
     };
     return _this;
   }
@@ -33495,16 +33590,48 @@ function (_React$Component) {
   _createClass(App, [{
     key: "componentDidMount",
     value: function componentDidMount() {
+      var _this2 = this;
+
       _axios.default.get("https://newsapi.org/v2/top-headlines?country=in&category=technology&apiKey=fabb056ff8594a2c9cd1ea680aa83aa7").then(function (response) {
-        console.log(response.data);
+        _this2.setState({
+          news: response.data.articles
+        });
+
+        console.log(_this2.state.news);
+      }).catch(function (err) {
+        _this2.setState({
+          err: "Oops There was an error while fetching the data to server",
+          isError: true
+        });
       });
     }
   }, {
     key: "render",
     value: function render() {
-      return _react.default.createElement(_react.default.Fragment, null, _react.default.createElement("div", {
+      return _react.default.createElement(_react.default.Fragment, null, _react.default.createElement(_Heading.default, null), this.state.news.isError ? _react.default.createElement("h1", null, this.state.news.err) : _react.default.createElement("div", {
         className: "main-page"
-      }, _react.default.createElement("h1", null, "This is working fine")));
+      }, this.state.news.map(function (data) {
+        return _react.default.createElement("div", {
+          className: "card",
+          key: data.title
+        }, _react.default.createElement("div", {
+          className: "card-head"
+        }, _react.default.createElement("h2", null, data.title)), _react.default.createElement("div", {
+          className: "author"
+        }, _react.default.createElement("p", {
+          className: "text-light"
+        }, "  Source: ", data.source.name, " \xA0\xA0\xA0  PublishedAt : ", data.publishedAt.substr(0, 10), " ")), _react.default.createElement("div", {
+          className: "card-body"
+        }, _react.default.createElement("h3", null, data.description)), _react.default.createElement("div", {
+          className: "card-body"
+        }, _react.default.createElement("h3", null, data.content.substr(0, 200) + '...'), _react.default.createElement("button", {
+          className: "btn"
+        }, _react.default.createElement("a", {
+          href: data.url,
+          target: "__blank",
+          rel: "noopener"
+        }, "Read More..."))));
+      })));
     }
   }]);
 
@@ -33513,7 +33640,12 @@ function (_React$Component) {
 
 var _default = App;
 exports.default = _default;
-},{"react":"../node_modules/react/index.js","axios":"../node_modules/axios/index.js"}],"index.js":[function(require,module,exports) {
+},{"react":"../node_modules/react/index.js","axios":"../node_modules/axios/index.js","./app.css":"components/app.css","./Heading":"components/Heading.js"}],"index.css":[function(require,module,exports) {
+var reloadCSS = require('_css_loader');
+
+module.hot.dispose(reloadCSS);
+module.hot.accept(reloadCSS);
+},{"_css_loader":"../node_modules/parcel-bundler/src/builtins/css-loader.js"}],"index.js":[function(require,module,exports) {
 "use strict";
 
 var _react = _interopRequireDefault(require("react"));
@@ -33522,10 +33654,12 @@ var _reactDom = _interopRequireDefault(require("react-dom"));
 
 var _app = _interopRequireDefault(require("./components/app"));
 
+require("./index.css");
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 _reactDom.default.render(_react.default.createElement(_app.default, null), document.getElementById('app'));
-},{"react":"../node_modules/react/index.js","react-dom":"../node_modules/react-dom/index.js","./components/app":"components/app.js"}],"../node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+},{"react":"../node_modules/react/index.js","react-dom":"../node_modules/react-dom/index.js","./components/app":"components/app.js","./index.css":"index.css"}],"../node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -33553,7 +33687,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "27601" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "36559" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
